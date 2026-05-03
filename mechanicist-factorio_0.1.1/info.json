@@ -1,0 +1,23 @@
+{
+  "name": "mechanicist-factorio",
+  "version": "0.1.1",
+  "title": "Mechanicist Factorio",
+  "author": "mrcalzon",
+  "homepage": "none",
+  "description": "A grim industrial retheme and expansion for Factorio, translating the base game's machinery, logistics, research, and armored doctrine into a Mechanicus-inspired manufactorum war economy. Includes stronger tanks, revised vehicle systems, required Informatron and Factory Planner support, plus compatibility hooks for Space Age, Quality, and Mechanicus-themed mods.",
+  "factorio_version": "2.0",
+  "dependencies": [
+    "base >= 2.0",
+    "! pypostprocessing",
+    "! IndustrialRevolution3",
+    "informatron",
+    "factoryplanner",
+    "? space-age >= 2.0.0",
+    "? quality >= 2.0.0",
+    "? MechanicusMiniMAX",
+    "? ORKYMiniMAX",
+    "? mechanicus-reborn",
+    "? Mechanicus",
+    "? mechanicus"
+  ]
+}
