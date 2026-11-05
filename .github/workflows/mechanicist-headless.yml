@@ -1,0 +1,93 @@
+name: Mechanicist Factorio | official 2.1 headless validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mechanicist-factorio_0.1.1/**'
+      - 'ci/**'
+      - '.github/workflows/mechanicist-headless.yml'
+  pull_request:
+    paths:
+      - 'mechanicist-factorio_0.1.1/**'
+      - 'ci/**'
+      - '.github/workflows/mechanicist-headless.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 9 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  factorio-headless:
+    name: Only Mechanicist + official Factorio modules
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate isolated Factorio 2.1 mod metadata and source
+        run: |
+          python3 -m py_compile ci/verify.py ci/run_headless.py
+          python3 ci/verify.py
+
+      - name: Resolve current official stable Factorio 2.1 headless release
+        id: engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json, re, urllib.request
+          request = urllib.request.Request(
+              "https://factorio.com/api/latest-releases",
+              headers={"User-Agent": "Mechanicist-Factorio-CI/1"})
+          with urllib.request.urlopen(request, timeout=30) as response:
+              version = json.load(response)["stable"]["headless"]
+          if not re.fullmatch(r"2\.1\.\d+", version):
+              raise SystemExit(f"Expected stable Factorio 2.1 headless; received {version}")
+          print(f"version={version}")
+          PY
+
+      - name: Download and verify official 2.1 headless server
+        shell: bash
+        env:
+          VERSION: ${{ steps.engine.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p test-artifacts
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/factorio.tar.xz" \
+            "https://factorio.com/get-download/${VERSION}/headless/linux64"
+          tar -xJf "$RUNNER_TEMP/factorio.tar.xz" -C "$RUNNER_TEMP"
+          "$RUNNER_TEMP/factorio/bin/x64/factorio" --version | tee test-artifacts/factorio-version.txt
+          grep -Fq "$VERSION" test-artifacts/factorio-version.txt
+
+      - name: Load, simulate and run private server (base / rails / quality / full Space Age)
+        run: |
+          python3 ci/run_headless.py \
+            --binary "$RUNNER_TEMP/factorio/bin/x64/factorio" \
+            --source "mechanicist-factorio_0.1.1" \
+            --work "$RUNNER_TEMP/mechanicist-ci" \
+            --artifacts test-artifacts
+
+      - name: Publish failures and exact per-mode evidence
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f test-artifacts/summary.md ]]; then
+            cat test-artifacts/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'Headless suite did not reach execution; inspect setup steps.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Preserve complete creation, simulation, server and error logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mechanicist-factorio-2.1-headless-evidence
+          path: test-artifacts/
+          if-no-files-found: warn
