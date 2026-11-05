@@ -44,7 +44,9 @@ def main():
     if found != EXPECTED:
         raise SystemExit(f"Official dependencies mismatch: expected {sorted(EXPECTED)}; got {sorted(found)}")
     source = (SOURCE / "data.lua").read_text(encoding="utf-8")
-    if "pcall(require" in source or "safe_require" in source:
+    executable = "\n".join(line for line in source.splitlines()
+                           if not line.lstrip().startswith("--"))
+    if "pcall(require" in executable or "safe_require" in executable:
         raise SystemExit("Data stage must not suppress missing-module exceptions")
     print("STATIC_PASS: isolated Mechanicist Factorio 2.1 metadata and source structure")
 

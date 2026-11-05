@@ -18,10 +18,10 @@ MODES = {
     "space-age-full": {"elevated-rails", "recycler", "quality", "space-age"},
 }
 FATAL = re.compile(
-    r"(?im)^(?:\\s*\\d+(?:\\.\\d+)?\\s+)?Error\\b|"
+    r"(?im)^(?:\s*\d+(?:\.\d+)?\s+)?Error\b|"
     r"Error while loading|Failed to load|Error while running|stack traceback"
 )
-LOAD = re.compile(r"\\bLoading mod ([A-Za-z0-9_-]+)\\s")
+LOAD = re.compile(r"\bLoading mod ([A-Za-z0-9_-]+)\s")
 
 
 def read_log(path):
@@ -40,7 +40,7 @@ def run_command(args, logfile, seconds):
                                     timeout=seconds, check=False)
             return result.returncode
         except subprocess.TimeoutExpired:
-            target.write(f"\\nCI_TIMEOUT after {seconds}s\\n")
+            target.write(f"\nCI_TIMEOUT after {seconds}s\n")
             return 124
 
 
