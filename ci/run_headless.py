@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 
 OFFICIAL = ("base", "elevated-rails", "recycler", "quality", "space-age")
-ALLOWED = set(OFFICIAL) | {"core", "mechanicist-factorio"}
+ALLOWED = set(OFFICIAL) | {"core", "mechanicist-factorio", "settings"}  # engine settings phase
 MODES = {
     "base-only": set(),
     "elevated-rails": {"elevated-rails"},
