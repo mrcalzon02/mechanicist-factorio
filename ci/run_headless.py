@@ -49,7 +49,7 @@ def server_smoke(binary, mods, save, settings, logfile):
             "--start-server", str(save), "--server-settings", str(settings)]
     with logfile.open("w", encoding="utf-8") as output:
         proc = subprocess.Popen(args, stdout=output, stderr=subprocess.STDOUT,
-                                stdin=subprocess.DEVNULL)
+                                stdin=subprocess.PIPE)
         try:
             deadline = time.monotonic() + 75
             hosted = False
