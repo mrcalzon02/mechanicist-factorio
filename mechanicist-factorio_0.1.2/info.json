@@ -1,10 +1,10 @@
 {
   "name": "mechanicist-factorio",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "title": "Mechanicist Factorio",
   "author": "mrcalzon",
   "homepage": "https://github.com/mrcalzon02/mechanicist-factorio",
-  "description": "Mechanicus-inspired retheme of Factorio machines, logistics, research and Space Age/Quality content. Runs with Factorio 2.1 base alone or the official expansion mods; no third-party mods required.",
+  "description": "Mechanicus-inspired Factorio 2.1 language and prototype-localization retheme, supporting base, Elevated Rails, Recycler, Quality and Space Age without third-party mods.",
   "factorio_version": "2.1",
   "dependencies": [
     "base >= 2.1.0",

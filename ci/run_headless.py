@@ -4,6 +4,7 @@ import argparse
 import json
 import re
 import shutil
+import zipfile
 import subprocess
 import sys
 import time
@@ -73,11 +74,11 @@ def server_smoke(binary, mods, save, settings, logfile):
                     proc.wait(timeout=5)
 
 
-def check_mode(binary, source, work, artifacts, mode, enabled):
+def check_mode(binary, package, work, artifacts, mode, enabled):
     folder = work / mode
     mods = folder / "mods"
     mods.mkdir(parents=True, exist_ok=True)
-    shutil.copytree(source, mods / "mechanicist-factorio")
+    shutil.copy2(package, mods / package.name)
     entries = [{"name": "base", "enabled": True},
                {"name": "mechanicist-factorio", "enabled": True}]
     entries.extend({"name": name, "enabled": name in enabled}
@@ -150,17 +151,27 @@ def check_mode(binary, source, work, artifacts, mode, enabled):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--binary", required=True, type=Path)
-    parser.add_argument("--source", required=True, type=Path)
+    parser.add_argument("--package", required=True, type=Path)
     parser.add_argument("--work", required=True, type=Path)
     parser.add_argument("--artifacts", required=True, type=Path)
     args = parser.parse_args()
+    if not args.package.is_file() or not zipfile.is_zipfile(args.package):
+        raise SystemExit("Packaged mod ZIP missing or invalid")
+    with zipfile.ZipFile(args.package) as archive:
+        roots = {p.split("/", 1)[0] for p in archive.namelist()}
+        if len(roots) != 1:
+            raise SystemExit("Package must have exactly one versioned top-level directory")
+        root = next(iter(roots))
+        info = json.loads(archive.read(root + "/info.json"))
+        if root != f"{info['name']}_{info['version']}" or args.package.name != root + ".zip":
+            raise SystemExit("Mod package ZIP root/name/version mismatch")
     args.artifacts.mkdir(parents=True, exist_ok=True)
     args.work.mkdir(parents=True, exist_ok=True)
     reports = []
     try:
         for mode, enabled in MODES.items():
             try:
-                reports.append(check_mode(args.binary, args.source, args.work,
+                reports.append(check_mode(args.binary, args.package, args.work,
                                           args.artifacts, mode, enabled))
             except Exception as exc:
                 reports.append({"mode": mode, "passed": False,

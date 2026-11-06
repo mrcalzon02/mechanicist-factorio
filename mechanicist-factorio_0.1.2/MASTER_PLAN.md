@@ -2,7 +2,7 @@
 
 ## 1. Core Project Intent
 
-Mechanicist Factorio is a thematic conversion project for Factorio 2.0 intended to translate the base game into a darker, more ritualized, industrial machine-cult style inspired by grim far-future war industry, priestly engineering, sacred logistics, manufactorum bureaucracy, and the slow spiritual corrosion of automation.
+Mechanicist Factorio is a thematic conversion project for Factorio 2.1 intended to translate the base game into a darker, more ritualized, industrial machine-cult style inspired by grim far-future war industry, priestly engineering, sacred logistics, manufactorum bureaucracy, and the slow spiritual corrosion of automation.
 
 The first major goal is language conversion: item names, recipe names, technology names, entity names, tips, flavor text, descriptions, menu entries, and player-facing terminology should feel as though Factorio has been filtered through an Administratum archive, a Mechanicus forge ledger, and a deeply unwell production supervisor who believes every assembler has a soul and every missing gear wheel is a minor heresy.
 

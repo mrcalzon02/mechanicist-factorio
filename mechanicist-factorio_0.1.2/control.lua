@@ -6,7 +6,7 @@
 -- flavor GUI warnings.
 
 local MOD_NAME = "mechanicist-factorio"
-local MOD_VERSION = "0.1.1"
+local MOD_VERSION = "0.1.2"
 
 local XENOS_WARNING_ELEMENT = "mechanicist_orky_business_xenos_warning"
 local XENOS_WARNING_TICK_RATE = 30
@@ -119,13 +119,9 @@ local function initialize_mechanicist_runtime()
   debug_log("Runtime initialized.")
 end
 
--- Register Informatron pages if the optional script exists.
--- Kept in pcall so a future script-side typo cannot hard-crash the whole runtime
--- before the base mod can be tested.
-local ok, err = pcall(require, "scripts.informatron")
-if not ok then
-  log("[Mechanicist Factorio] Informatron runtime script not loaded: " .. tostring(err))
-end
+-- The bundled remote page integration is part of the mod. Do not swallow
+-- runtime Lua exceptions: CI must detect genuinely broken source.
+require("scripts.informatron")
 
 script.on_init(function()
   initialize_mechanicist_runtime()

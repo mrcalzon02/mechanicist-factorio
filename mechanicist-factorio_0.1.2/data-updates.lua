@@ -736,13 +736,20 @@ end
 -- Space Age retheme layer. Unlike the base game layer, this is a single on/off
 -- Red Priest of Mars conversion: if enabled, Space Age screams Mechanicus.
 
+-- Only assign locale descriptions that exist in our Space Age locale file.
+-- Otherwise keep the original Factorio description rather than showing an
+-- "Unknown key" placeholder in-game. The manifest is checked by CI.
+local space_age_description_keys = require("scripts.space_age_description_keys")
+
 local function apply_locale_to_any_existing_prototype(name, locale_section, description_section)
   if not data or not data.raw then return end
   for _, prototypes in pairs(data.raw) do
     if type(prototypes) == "table" and prototypes[name] then
       local proto = prototypes[name]
       proto.localised_name = {"mechanicist-space-age." .. locale_section .. "." .. name}
-      if description_section then
+      if description_section and
+          space_age_description_keys[description_section] and
+          space_age_description_keys[description_section][name] then
         proto.localised_description = {"mechanicist-space-age." .. description_section .. "." .. name}
       end
     end
