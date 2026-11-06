@@ -8,16 +8,25 @@ import zipfile
 import subprocess
 import sys
 import time
+import struct
 from pathlib import Path
 
 OFFICIAL = ("base", "elevated-rails", "recycler", "quality", "space-age")
 ALLOWED = set(OFFICIAL) | {"core", "mechanicist-factorio", "settings"}  # engine settings phase
 MODES = {
-    "base-only": set(),
-    "elevated-rails": {"elevated-rails"},
-    "quality": {"recycler", "quality"},
-    "space-age-full": {"elevated-rails", "recycler", "quality", "space-age"},
+    # Enable the in-game assertions for every mode; the ZIP itself is unchanged.
+    "base-standard": (set(), {}),
+    "base-heresy": (set(), {"mechanicist-factorio-language-intensity": "heresy"}),
+    "base-off": (set(), {"mechanicist-factorio-language-intensity": "off",
+                        "mechanicist-factorio-rename-vanilla": False}),
+    "elevated-rails": ({"elevated-rails"}, {}),
+    "quality-on": ({"recycler", "quality"}, {}),
+    "quality-off": ({"recycler", "quality"}, {"mechanicist-factorio-rename-quality": False}),
+    "space-age-full": ({"elevated-rails", "recycler", "quality", "space-age"}, {}),
+    "space-age-off": ({"elevated-rails", "recycler", "quality", "space-age"},
+                      {"mechanicist-factorio-rename-space-age": False}),
 }
+
 FATAL = re.compile(
     r"(?im)^(?:\s*\d+(?:\.\d+)?\s+)?Error\b|"
     r"Error while loading|Failed to load|Error while running|stack traceback"
@@ -74,7 +83,35 @@ def server_smoke(binary, mods, save, settings, logfile):
                     proc.wait(timeout=5)
 
 
-def check_mode(binary, package, work, artifacts, mode, enabled):
+
+def write_mod_settings(path, extra):
+    """Write Factorio 2.1 mod-settings.dat using the official PropertyTree format.
+
+    This lets the *unmodified release ZIP* run with different startup settings.
+    Format: 4 little-endian uint16 version fields, one false flag, then tree.
+    """
+    def string(value):
+        encoded = value.encode("utf-8")
+        return b"\x00" + (bytes((len(encoded),)) if len(encoded) < 255
+                          else b"\xff" + struct.pack("<I", len(encoded))) + encoded
+
+    def tree(value):
+        if isinstance(value, bool):
+            return b"\x01\x00" + bytes((1 if value else 0,))
+        if isinstance(value, str):
+            return b"\x03\x00" + string(value)
+        if isinstance(value, dict):
+            data = b"\x05\x00" + struct.pack("<I", len(value))
+            return data + b"".join(string(key) + tree(val) for key, val in value.items())
+        raise TypeError(f"Unsupported mod settings value: {value!r}")
+
+    startup = {"mechanicist-factorio-debug-locale-audit": {"value": True}}
+    startup.update({name: {"value": val} for name, val in extra.items()})
+    payload = {"startup": startup, "runtime-global": {}, "runtime-per-user": {}}
+    path.write_bytes(struct.pack("<4H", 2, 1, 24, 0) + b"\x00" + tree(payload))
+
+
+def check_mode(binary, package, work, artifacts, mode, enabled, options):
     folder = work / mode
     mods = folder / "mods"
     mods.mkdir(parents=True, exist_ok=True)
@@ -85,8 +122,9 @@ def check_mode(binary, package, work, artifacts, mode, enabled):
                    for name in OFFICIAL if name != "base")
     (mods / "mod-list.json").write_text(json.dumps({"mods": entries}, indent=2),
                                         encoding="utf-8")
+    write_mod_settings(mods / "mod-settings.dat", options)
     report = {"mode": mode, "enabled_official": sorted(enabled | {"base"}),
-              "stages": {}, "errors": []}
+              "settings": options, "stages": {}, "errors": []}
     save = folder / "smoke.zip"
     create = artifacts / f"{mode}-create.log"
     bench = artifacts / f"{mode}-benchmark.log"
@@ -101,6 +139,9 @@ def check_mode(binary, package, work, artifacts, mode, enabled):
     missing = expected - loaded
     report["stages"]["create"] = code == 0 and save.is_file() and not missing and not unexpected
     report["errors"] += findings_in(raw)
+    if "LOCALE_AUDIT_PASS" not in raw:
+        report["stages"]["create"] = False
+        report["errors"].append("In-engine locale assertions did not execute/pass")
     if code != 0:
         report["errors"].append(f"Create exited {code}")
     if missing:
@@ -169,10 +210,10 @@ def main():
     args.work.mkdir(parents=True, exist_ok=True)
     reports = []
     try:
-        for mode, enabled in MODES.items():
+        for mode, (enabled, options) in MODES.items():
             try:
                 reports.append(check_mode(args.binary, args.package, args.work,
-                                          args.artifacts, mode, enabled))
+                                          args.artifacts, mode, enabled, options))
             except Exception as exc:
                 reports.append({"mode": mode, "passed": False,
                                 "stages": {}, "errors": [f"Unhandled CI stage exception: {exc}"]})

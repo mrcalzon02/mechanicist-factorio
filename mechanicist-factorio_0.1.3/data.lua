@@ -1,0 +1,6 @@
+-- Mechanicist Factorio has no independent prototype tree in this repository.
+-- Its retheme of existing Factorio 2.1 prototypes is defined in data-updates.lua.
+-- Do not pcall(require) non-existent inherited tank modules: that hid real
+-- loading failures and produced misleading logs without adding any prototypes.
+-- Any future prototype module must be committed and required normally, so a
+-- missing file or Lua error fails the actual headless compatibility test.

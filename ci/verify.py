@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Validate the Factorio 2.1 Mechanicist source and its Space Age localization."""
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "mechanicist-factorio_0.1.2"
+SOURCE = ROOT / "mechanicist-factorio_0.1.3"
 EXPECTED = {"base", "elevated-rails", "recycler", "quality", "space-age"}
 REQUIRED = (
     "info.json", "settings.lua", "data.lua", "data-updates.lua", "control.lua",
@@ -16,8 +18,8 @@ REQUIRED = (
 def main():
     info = json.loads((SOURCE / "info.json").read_text(encoding="utf-8"))
     if (info["name"], info["version"], info["factorio_version"]) != (
-            "mechanicist-factorio", "0.1.2", "2.1"):
-        raise SystemExit("Mod name/version/Factorio target must match the 0.1.2 release")
+            "mechanicist-factorio", "0.1.3", "2.1"):
+        raise SystemExit("Mod name/version/Factorio target must match the 0.1.3 release")
     if SOURCE.name != info["name"] + "_" + info["version"]:
         raise SystemExit("Source directory version mismatch")
     for name in REQUIRED:
@@ -76,7 +78,9 @@ def main():
     data_updates = (SOURCE / "data-updates.lua").read_text(encoding="utf-8")
     if "space_age_description_keys[description_section][name]" not in data_updates:
         raise SystemExit("Data stage must guard optional Space Age descriptions")
-    print("STATIC_PASS: Mechanicist 0.1.2 / Factorio 2.1 / locale keys")
+    subprocess.run([sys.executable, str(ROOT / "ci/audit_locale.py")],
+                   cwd=ROOT, check=True)
+    print("STATIC_PASS: Mechanicist 0.1.3 / Factorio 2.1 / locale keys")
 
 
 if __name__ == "__main__":

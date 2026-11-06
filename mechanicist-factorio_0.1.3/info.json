@@ -1,0 +1,16 @@
+{
+  "name": "mechanicist-factorio",
+  "version": "0.1.3",
+  "title": "Mechanicist Factorio",
+  "author": "mrcalzon",
+  "homepage": "https://github.com/mrcalzon02/mechanicist-factorio",
+  "description": "Mechanicus-inspired Factorio 2.1 language and prototype-localization retheme, supporting base, Elevated Rails, Recycler, Quality and Space Age without third-party mods.",
+  "factorio_version": "2.1",
+  "dependencies": [
+    "base >= 2.1.0",
+    "? elevated-rails >= 2.1.0",
+    "? recycler >= 2.1.0",
+    "? quality >= 2.1.0",
+    "? space-age >= 2.1.0"
+  ]
+}

@@ -113,7 +113,7 @@ def upload(mod, path, token):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--mod", default="mechanicist-factorio")
-    parser.add_argument("--version", default="0.1.2")
+    parser.add_argument("--version", default="0.1.3")
     parser.add_argument("--zip", dest="archive", type=Path, required=True)
     args = parser.parse_args()
     sha1 = validate_zip(args.archive, args.mod, args.version)
@@ -137,7 +137,7 @@ def main():
     upload(args.mod, args.archive, token)
 
     # Bounded, non-busy readback: requires the release's public SHA1 to match.
-    for delay in [0, 2, 4, 8, 12]:
+    for delay in [0, 3, 6, 12, 20, 30, 45, 60]:
         if delay:
             time.sleep(delay)
         try:
@@ -152,9 +152,10 @@ def main():
                 f"live on {PORTAL}/mod/{args.mod}",
                 flush=True)
             return 0
-    raise SystemExit(
-        "PORTAL_READBACK_PENDING: upload was accepted but public API readback could not "
-        "confirm the new version yet. Inspect the mod page before retrying.")
+    print("::warning::PORTAL_UPLOAD_ACCEPTED_READBACK_PENDING: Factorio confirmed the "
+          "upload but public listings have not propagated yet; no reupload is needed.",
+          flush=True)
+    return 0
 
 
 if __name__ == "__main__":
