@@ -47,7 +47,7 @@ def main():
                 raise SystemExit(f"ZIP content differs from original: {path}")
     digest = hashlib.sha256(output.read_bytes()).hexdigest()
     (args.output_dir / (output.name + ".sha256")).write_text(
-        f"{digest}  {output.name}\\n", encoding="ascii")
+        f"{digest}  {output.name}\n", encoding="ascii")
     print(f"PACKAGE_PASS: {output} ({output.stat().st_size} bytes), SHA-256 {digest}")
 
 

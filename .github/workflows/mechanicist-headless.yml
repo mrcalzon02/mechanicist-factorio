@@ -39,8 +39,8 @@ jobs:
 
       - name: Package exact release archive and verify source parity
         run: |
-          python3 ci/package_mod.py \\
-            --source mechanicist-factorio_0.1.2 \\
+          python3 ci/package_mod.py \
+            --source mechanicist-factorio_0.1.2 \
             --output-dir test-artifacts
 
       - name: Resolve current official stable Factorio 2.1 headless release
@@ -77,7 +77,7 @@ jobs:
         run: |
           python3 ci/run_headless.py \
             --binary "$RUNNER_TEMP/factorio/bin/x64/factorio" \
-            --source "mechanicist-factorio_0.1.2" \
+            --package "test-artifacts/mechanicist-factorio_0.1.2.zip" \
             --work "$RUNNER_TEMP/mechanicist-ci" \
             --artifacts test-artifacts
 
