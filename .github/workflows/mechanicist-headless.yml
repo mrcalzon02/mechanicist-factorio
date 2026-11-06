@@ -7,6 +7,7 @@ on:
       - 'mechanicist-factorio_0.1.2/**'
       - 'ci/**'
       - 'README.md'
+      - 'RELEASE_NOTES.md'
       - '.github/workflows/mechanicist-headless.yml'
   pull_request:
     paths:
@@ -108,3 +109,52 @@ jobs:
           name: mechanicist-factorio-2.1-headless-evidence
           path: test-artifacts/
           if-no-files-found: warn
+
+  publish-release:
+    name: Publish tested v0.1.2 ZIP to GitHub Releases
+    needs: [factorio-headless]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download same installation ZIP tested by headless CI
+        uses: actions/download-artifact@v4
+        with:
+          name: mechanicist-factorio-installable
+          path: dist
+
+      - name: Verify release package and SHA-256
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/mechanicist-factorio_0.1.2.zip
+          test -s dist/mechanicist-factorio_0.1.2.zip.sha256
+          (cd dist && sha256sum --check mechanicist-factorio_0.1.2.zip.sha256)
+
+      - name: Publish verified v0.1.2 versioned release (never retag)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag="v0.1.2"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; keep published version intact."
+            exit 0
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null 2>&1; then
+            echo "::error::Tag $tag exists without release; refuse to move an existing tag."
+            exit 1
+          fi
+          gh release create "$tag" \
+            dist/mechanicist-factorio_0.1.2.zip \
+            dist/mechanicist-factorio_0.1.2.zip.sha256 \
+            --target "$GITHUB_SHA" \
+            --title "Mechanicist Factorio v0.1.2 — Factorio 2.1 compatible" \
+            --notes-file RELEASE_NOTES.md \
+            --latest
+          gh release view "$tag" --json url,tagName,isDraft,isPrerelease,assets
