@@ -52,3 +52,11 @@ The CI workflow builds the actual installable ZIP and runs it on the genuine **F
 ## Reproducible build and official GitHub Release
 
 CI packages precisely the files from **mechanicist-factorio_0.1.2/** into a versioned ZIP, verifies source parity and a SHA-256 digest, and tests that same ZIP in four isolated engine configurations. **Release publication is gated on passing those runtime checks**, and the downloadable release asset is the exact tested package. Evidence artifacts and logs remain available from GitHub Actions.
+
+## Factorio Mod Portal release
+
+The existing [Mechanicist Factorio Mod Portal listing](https://mods.factorio.com/mod/mechanicist-factorio) is updated automatically after a successful Factorio 2.1 headless test and GitHub v0.1.2 release. The publisher downloads **the exact GitHub release ZIP**, verifies its SHA-256 checksum, then uses Factorio's official two-step release-upload API. It checks the public Mod Portal release's **SHA-1** matches the uploaded ZIP; it refuses to overwrite a pre-existing version with different contents.
+
+**One-time publisher setup:** In **this** GitHub repository, go to **Settings → Secrets and variables → Actions → New repository secret**. Name it **FACTORIO_MOD_UPLOAD_KEY** and paste a Factorio API key generated at [factorio.com/profile](https://factorio.com/profile) with **ModPortal: Upload Mods** permission. This is separate from game-download tokens like FACTORIO_TOKEN and FACTORIO_USERNAME. Never commit or paste the key into issues, README files, or chat. Re-run the [headless workflow](https://github.com/mrcalzon02/mechanicist-factorio/actions/workflows/mechanicist-headless.yml) with **Run workflow** after adding the secret; subsequent eligible main-branch runs can publish releases automatically.
+
+The publisher only updates the **existing** mod (it does not create another listing), does not change tags, and will report a missing secret or portal rejection as an actual failed publishing job. It will not falsely claim publication when unverified.
